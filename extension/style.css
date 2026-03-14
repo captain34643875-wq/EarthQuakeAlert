@@ -1,0 +1,183 @@
+/* style.css
+ * popup.html 전용 스타일
+ * - 단순하지만 깔끔한 카드형 리스트 UI
+ * - 새 지진(quake-item-new)은 빨간 테두리/배경으로 강조
+ */
+
+/* 전체 레이아웃 기본 스타일 */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background-color: #f5f6fa;
+  color: #222;
+}
+
+/* 팝업 전체 컨테이너 */
+#app {
+  width: 380px;
+  max-height: 600px;
+  box-sizing: border-box;
+  padding: 10px 12px 12px;
+}
+
+/* 헤더 영역 */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #666;
+}
+
+/* 새로 고침 버튼 */
+.refresh-button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  background-color: #2f80ed;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.refresh-button:hover {
+  background-color: #1a6ce0;
+}
+
+.refresh-button:active {
+  transform: scale(0.97);
+}
+
+/* 상태 영역 */
+.status-section {
+  margin-bottom: 6px;
+}
+
+.status-text {
+  font-size: 11px;
+  color: #555;
+}
+
+.status-error {
+  color: #b3261e;
+}
+
+/* 리스트 영역 */
+.list-section {
+  margin-top: 4px;
+}
+
+/* 리스트 기본 스타일 제거 */
+.earthquake-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 지진 항목 기본 스타일 */
+.quake-item {
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-left: 4px solid #2f80ed;
+}
+
+/* 새 지진 경고 스타일 */
+.quake-item-new {
+  border-left-color: #e02424;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 235, 238, 0.9),
+    rgba(255, 255, 255, 0.95)
+  );
+}
+
+/* 새 지진 항목 안에서 텍스트 색상 약간 강조 */
+.quake-item-new .quake-place {
+  color: #b3261e;
+}
+
+/* 헤더 (규모 + 위치) */
+.quake-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.quake-mag {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827;
+}
+
+.quake-place {
+  font-size: 13px;
+  color: #374151;
+  flex: 1;
+}
+
+/* 상세 정보 영역 */
+.quake-details {
+  font-size: 11px;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+/* 상세 링크 */
+.quake-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.quake-link:hover {
+  text-decoration: underline;
+}
+
+/* 빈 리스트 문구 */
+.empty-item {
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+  padding: 16px 4px;
+}
+
+/* 푸터 */
+.footer {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+  padding-top: 4px;
+}
+
+.footer-text {
+  display: block;
+  font-size: 10px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+

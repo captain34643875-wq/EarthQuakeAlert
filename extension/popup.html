@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>지진 속보</title>
+    <!-- 팝업용 스타일 시트 -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- 헤더 영역: 제목 및 새로 고침 버튼 -->
+      <header class="header">
+        <div class="title-block">
+          <h1 class="title">지진 속보</h1>
+          <p class="subtitle">최근 1시간 이내 전세계 지진 정보</p>
+        </div>
+        <button id="refreshButton" class="refresh-button">새로 고침</button>
+      </header>
+
+      <!-- 상태 표시 영역 (마지막 업데이트 시각, 오류 메시지 등) -->
+      <section class="status-section">
+        <span id="statusText" class="status-text">데이터 불러오는 중...</span>
+      </section>
+
+      <!-- 최근 지진 리스트 영역 -->
+      <section class="list-section">
+        <!-- 지진 항목이 동적으로 여기 들어간다 -->
+        <ul id="earthquakeList" class="earthquake-list"></ul>
+      </section>
+
+      <!-- 푸터: 간단한 안내 -->
+      <footer class="footer">
+        <span class="footer-text">
+          데이터 제공: USGS (전세계 지진)<br />
+          빨간색 항목은 새로 감지된 지진입니다.
+        </span>
+      </footer>
+    </div>
+
+    <!-- 팝업 스크립트 -->
+    <script src="popup.js"></script>
+  </body>
+</html>
+

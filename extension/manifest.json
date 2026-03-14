@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "지진 속보 확장 프로그램",
+  "description": "전세계 최신 지진 정보를 주기적으로 확인하고 알림/팝업으로 알려주는 Chrome 확장 프로그램입니다.",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "지진 속보 보기"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "alarms",
+    "notifications",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://earthquake.usgs.gov/*"
+  ]
+}
+
