@@ -119,7 +119,7 @@ function normalizeEMSCData(data) {
     const url =
       props.url ||
       (emscId
-        ? `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${emscId}`
+        ? `https://www.emsc-csem.org/Earthquake_information/earthquake.php?id=${emscId}`
         : undefined);
     
     return {
