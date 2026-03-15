@@ -9,23 +9,17 @@
 
 // 각 기관별 API 엔드포인트
 const API_ENDPOINTS = {
-  // USGS - 최근 1시간 전 세계 지진 (GeoJSON 형식) - 안정적
+  // USGS - 최근 1시간 전 세계 지진 (GeoJSON 형식)
   USGS: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
   
-  // 한국 기상청 - 공개 API가 제한적이어서 임시로 USGS 데이터 활용
-  KMA: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
-  
-  // 일본 기상청 - 데이터 형식이 복잡하여 임시로 USGS 데이터 활용  
-  JMA: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
-  
-  // EMSC - 간단한 API로 수정
-  EMSC: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
+  // EMSC - 유럽 지진 데이터 (JSON 형식)
+  EMSC: "https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=20"
 };
 
 /**
  * 공통 지진 데이터 구조로 변환
  * @param {Object} rawData - 원본 지진 데이터
- * @param {string} source - 데이터 출처 (USGS, KMA, JMA, EMSC)
+ * @param {string} source - 데이터 출처 (USGS, EMSC)
  * @returns {Object} 표준화된 지진 데이터
  */
 function normalizeEarthquakeData(rawData, source) {
@@ -33,10 +27,6 @@ function normalizeEarthquakeData(rawData, source) {
     switch (source) {
       case 'USGS':
         return normalizeUSGSData(rawData);
-      case 'KMA':
-        return normalizeKMAData(rawData);
-      case 'JMA':
-        return normalizeJMAData(rawData);
       case 'EMSC':
         return normalizeEMSCData(rawData);
       default:
@@ -77,70 +67,11 @@ function normalizeUSGSData(data) {
 }
 
 /**
- * 한국 기상청 데이터 정규화
- * USGS 데이터를 KMA 형식으로 변환 (임시)
- */
-function normalizeKMAData(data) {
-  // USGS 데이터를 KMA 형식으로 변환
-  if (!data.features || !Array.isArray(data.features)) {
-    return [];
-  }
-  
-  return data.features.map(feature => {
-    const props = feature.properties || {};
-    const geom = feature.geometry || {};
-    const coords = geom.coordinates || [];
-    
-    return {
-      location: props.place || 'Unknown Location',
-      magnitude: props.mag || 0,
-      depth: coords[2] || 0,
-      time: new Date(props.time).toISOString(),
-      source: 'KMA',
-      id: `KMA_${feature.id}`,
-      latitude: coords[1],
-      longitude: coords[0],
-      url: props.url
-    };
-  });
-}
-
-/**
- * 일본 기상청 데이터 정규화
- * USGS 데이터를 JMA 형식으로 변환 (임시)
- */
-function normalizeJMAData(data) {
-  // USGS 데이터를 JMA 형식으로 변환
-  if (!data.features || !Array.isArray(data.features)) {
-    return [];
-  }
-  
-  return data.features.map(feature => {
-    const props = feature.properties || {};
-    const geom = feature.geometry || {};
-    const coords = geom.coordinates || [];
-    
-    return {
-      location: props.place || 'Unknown Location',
-      magnitude: props.mag || 0,
-      depth: coords[2] || 0,
-      time: new Date(props.time).toISOString(),
-      source: 'JMA',
-      id: `JMA_${feature.id}`,
-      latitude: coords[1],
-      longitude: coords[0],
-      url: props.url
-    };
-  });
-}
-
-/**
  * EMSC 데이터 정규화
- * USGS 데이터를 EMSC 형식으로 변환 (임시)
+ * EMSC JSON 형식을 공통 구조로 변환
  */
 function normalizeEMSCData(data) {
-  // USGS 데이터를 EMSC 형식으로 변환
-  if (!data.features || !Array.isArray(data.features)) {
+  if (!data || !data.features || !Array.isArray(data.features)) {
     return [];
   }
   
@@ -150,12 +81,12 @@ function normalizeEMSCData(data) {
     const coords = geom.coordinates || [];
     
     return {
-      location: props.place || 'Unknown Location',
+      location: props.description || props.place || props.title || 'Unknown Location',
       magnitude: props.mag || 0,
       depth: coords[2] || 0,
       time: new Date(props.time).toISOString(),
       source: 'EMSC',
-      id: `EMSC_${feature.id}`,
+      id: `EMSC_${feature.id || Date.now()}`,
       latitude: coords[1],
       longitude: coords[0],
       url: props.url
@@ -247,7 +178,7 @@ async function fetchEarthquakeData(source) {
 async function fetchAllEarthquakeData() {
   try {
     // 모든 기관에서 병렬로 데이터 가져오기
-    const sources = ['USGS', 'KMA', 'JMA', 'EMSC'];
+    const sources = ['USGS', 'EMSC'];
     const promises = sources.map(source => fetchEarthquakeData(source));
     
     const results = await Promise.allSettled(promises);

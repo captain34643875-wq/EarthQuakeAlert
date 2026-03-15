@@ -17,9 +17,7 @@
   ],
   "host_permissions": [
     "https://earthquake.usgs.gov/*",
-    "https://api.weather.go.kr/*",
-    "https://www.jma.go.jp/*",
-    "https://www.emsc-csem.org/*"
+    "https://www.seismicportal.eu/*"
   ]
 }
 
