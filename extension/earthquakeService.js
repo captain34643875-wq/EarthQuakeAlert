@@ -100,11 +100,7 @@ function normalizeEMSCData(data) {
     let url = props.url;
     if (!url && emscId) {
       // EMSC 상세 페이지 URL 형식
-      if (typeof emscId === 'string' && emscId.includes('_')) {
-        url = `https://www.seismicportal.eu/fdsnws/event/1/query?format=eventtxt&eventid=${emscId}`;
-      } else {
-        url = `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${emscId}`;
-      }
+      url = `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${emscId}`;
     }
     
     return {
