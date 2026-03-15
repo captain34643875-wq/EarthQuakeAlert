@@ -1,47 +1,43 @@
-/**
+﻿﻿/**
  * earthquakeService.js
- * 여러 기관의 지진 데이터를 수집하고 중복을 제거하는 서비스
- * - USGS (전 세계 지진)
- * - Korea Meteorological Administration (한국 지진)  
- * - Japan Meteorological Agency (일본 지진)
- * - EMSC (유럽 및 지중해 지진)
+ * ?щ윭 湲곌???吏�吏??곗씠?곕? ?섏쭛?섍퀬 以묐났???쒓굅?섎뒗 ?쒕퉬?? * - USGS (???멸퀎 吏�吏?
+ * - Korea Meteorological Administration (?쒓뎅 吏�吏?  
+ * - Japan Meteorological Agency (?쇰낯 吏�吏?
+ * - EMSC (?좊읇 諛?吏�以묓빐 吏�吏?
  */
 
-// 각 기관별 API 엔드포인트
+// API endpoints
+const ENABLE_EMSC = false;
+
 const API_ENDPOINTS = {
-  // USGS - 최근 1시간 전 세계 지진 (GeoJSON 형식)
+  // USGS - 理쒓렐 1?쒓컙 ???멸퀎 吏�吏?(GeoJSON ?뺤떇)
   USGS: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
   
-  // EMSC - 유럽 지진 데이터 (JSON 형식)
+  // EMSC - ?좊읇 吏�吏??곗씠??(JSON ?뺤떇)
   EMSC: "https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=20"
 };
 
 /**
- * 공통 지진 데이터 구조로 변환
- * @param {Object} rawData - 원본 지진 데이터
- * @param {string} source - 데이터 출처 (USGS, EMSC)
- * @returns {Object} 표준화된 지진 데이터
- */
+ * 怨듯넻 吏�吏??곗씠??援ъ“濡?蹂�?? * @param {Object} rawData - ?먮낯 吏�吏??곗씠?? * @param {string} source - ?곗씠??異쒖쿂 (USGS, EMSC)
+ * @returns {Object} ?쒖??붾맂 吏�吏??곗씠?? */
 function normalizeEarthquakeData(rawData, source) {
   try {
     switch (source) {
       case 'USGS':
         return normalizeUSGSData(rawData);
       case 'EMSC':
-        return normalizeEMSCData(rawData);
+        return ENABLE_EMSC ? normalizeEMSCData(rawData) : [];
       default:
         return null;
     }
   } catch (error) {
-    console.error(`${source} 데이터 정규화 오류:`, error);
+    console.error(`${source} ?곗씠???뺢퇋???ㅻ쪟:`, error);
     return null;
   }
 }
 
 /**
- * USGS 데이터 정규화
- * USGS GeoJSON 형식을 공통 구조로 변환
- */
+ * USGS ?곗씠???뺢퇋?? * USGS GeoJSON ?뺤떇??怨듯넻 援ъ“濡?蹂�?? */
 function normalizeUSGSData(data) {
   if (!data.features || !Array.isArray(data.features)) {
     return [];
@@ -67,9 +63,7 @@ function normalizeUSGSData(data) {
 }
 
 /**
- * EMSC 데이터 정규화
- * EMSC JSON 형식을 공통 구조로 변환
- */
+ * EMSC ?곗씠???뺢퇋?? * EMSC JSON ?뺤떇??怨듯넻 援ъ“濡?蹂�?? */
 function normalizeEMSCData(data) {
   if (!data || !data.features || !Array.isArray(data.features)) {
     return [];
@@ -98,7 +92,7 @@ function normalizeEMSCData(data) {
         props.flynnRegion
       ) ||
       (hasLatLon
-        ? `위도 ${latitude.toFixed(2)}, 경도 ${longitude.toFixed(2)}`
+        ? `?꾨룄 ${latitude.toFixed(2)}, 寃쎈룄 ${longitude.toFixed(2)}`
         : "Unknown Location");
 
     if (location === "Unknown Location") {
@@ -117,15 +111,29 @@ function normalizeEMSCData(data) {
       feature.id;
 
     const normalizeEmscUrl = (rawUrl, id) => {
-      if (typeof rawUrl === "string" && rawUrl.trim().length > 0) {
-        return rawUrl.replace(
-          "/Earthquake_information/earthquake.php",
-          "/Earthquake/earthquake.php"
-        );
+      const cleanedUrl =
+        typeof rawUrl === "string" && rawUrl.trim().length > 0
+          ? rawUrl.replace(
+              "/Earthquake_information/earthquake.php",
+              "/Earthquake/earthquake.php"
+            )
+          : undefined;
+
+      const hasSeismicPortalId =
+        typeof id === "string" && id.includes("_");
+
+      if (hasSeismicPortalId) {
+        return `https://www.seismicportal.eu/fdsnws/event/1/query?format=eventtxt&eventid=${id}`;
       }
+
+      if (cleanedUrl) {
+        return cleanedUrl;
+      }
+
       if (id) {
         return `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${id}`;
       }
+
       return undefined;
     };
 
@@ -146,90 +154,122 @@ function normalizeEMSCData(data) {
 }
 
 /**
- * 지진 데이터 중복 제거
- * 시간, 위치, 규모가 비슷하면 같은 이벤트로 처리
- * @param {Array} earthquakes - 지진 데이터 배열
- * @returns {Array} 중복이 제거된 지진 배열
+ * 吏�吏??곗씠??以묐났 ?쒓굅
+ * ?쒓컙, ?꾩튂, 洹쒕え媛� 鍮꾩듂?섎㈃ 媛숈? ?대깽?몃줈 泥섎━
+ * @param {Array} earthquakes - 吏�吏??곗씠??諛곗뿴
+ * @returns {Array} 以묐났???쒓굅??吏�吏?諛곗뿴
  */
 function removeDuplicateEarthquakes(earthquakes) {
   if (!earthquakes || earthquakes.length === 0) {
     return [];
   }
-  
+
+  const sourcePriority = (source) => {
+    if (source === \"USGS\") return 2;
+    if (source === \"EMSC\") return 1;
+    return 0;
+  };
+
+  const mergeEarthquakes = (preferred, fallback) => ({
+    ...fallback,
+    ...preferred,
+    location: preferred.location || fallback.location,
+    magnitude:
+      typeof preferred.magnitude === \"number\"
+        ? preferred.magnitude
+        : fallback.magnitude,
+    depth:
+      typeof preferred.depth === \"number\" ? preferred.depth : fallback.depth,
+    latitude:
+      typeof preferred.latitude === \"number\"
+        ? preferred.latitude
+        : fallback.latitude,
+    longitude:
+      typeof preferred.longitude === \"number\"
+        ? preferred.longitude
+        : fallback.longitude,
+    url: preferred.url || fallback.url,
+    source: preferred.source || fallback.source
+  });
+
   // 시간순으로 정렬 (최신순)
   const sorted = [...earthquakes].sort((a, b) => 
     new Date(b.time) - new Date(a.time)
   );
-  
+
   const unique = [];
-  const seen = new Set();
-  
+
   for (const earthquake of sorted) {
-    // 중복 확인을 위한 키 생성
-    // 시간 차이 (5분 이내), 위치 유사성 (1도 이내), 규모 유사성 (0.5 이내)
-    const duplicateKey = sorted.filter(existing => {
+    const duplicateIndex = unique.findIndex(existing => {
       if (existing.id === earthquake.id) return true;
-      
+
       const timeDiff = Math.abs(
         new Date(existing.time) - new Date(earthquake.time)
       ) / (1000 * 60); // 분 단위
-      
+
       const latDiff = Math.abs(existing.latitude - earthquake.latitude);
       const lonDiff = Math.abs(existing.longitude - earthquake.longitude);
       const magDiff = Math.abs(existing.magnitude - earthquake.magnitude);
-      
+
       // 중복 기준: 5분 이내, 1도 이내 위치, 0.5 이내 규모 차이
       return timeDiff <= 5 && latDiff <= 1 && lonDiff <= 1 && magDiff <= 0.5;
     });
-    
-    // 중복이 아니면 추가
-    if (!duplicateKey.some(existing => unique.includes(existing))) {
+
+    if (duplicateIndex === -1) {
       unique.push(earthquake);
+      continue;
     }
+
+    const existing = unique[duplicateIndex];
+    const preferred =
+      sourcePriority(earthquake.source) > sourcePriority(existing.source)
+        ? mergeEarthquakes(earthquake, existing)
+        : mergeEarthquakes(existing, earthquake);
+    unique[duplicateIndex] = preferred;
   }
-  
+
   return unique;
 }
-
 /**
- * 특정 기관의 지진 데이터 가져오기
- * @param {string} source - 데이터 출처 (USGS, KMA, JMA, EMSC)
- * @returns {Promise<Array>} 정규화된 지진 데이터 배열
+ * ?뱀젙 湲곌???吏�吏??곗씠??媛�?몄삤湲? * @param {string} source - ?곗씠??異쒖쿂 (USGS, KMA, JMA, EMSC)
+ * @returns {Promise<Array>} ?뺢퇋?붾맂 吏�吏??곗씠??諛곗뿴
  */
 async function fetchEarthquakeData(source) {
+  if (source === "EMSC" && !ENABLE_EMSC) {
+    throw new Error('EMSC disabled');
+  }
+
   try {
     const url = API_ENDPOINTS[source];
     if (!url) {
-      throw new Error(`지원되지 않는 데이터 출처: ${source}`);
+      throw new Error(`吏�?먮릺吏� ?딅뒗 ?곗씠??異쒖쿂: ${source}`);
     }
     
-    console.log(`${source}에서 지진 데이터 가져오는 중...`);
+    console.log(`${source}?먯꽌 吏�吏??곗씠??媛�?몄삤??以?..`);
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`${source} API 요청 실패: ${response.status}`);
+      throw new Error(`${source} API ?붿껌 ?ㅽ뙣: ${response.status}`);
     }
     
     const data = await response.json();
     const normalized = normalizeEarthquakeData(data, source);
     
-    console.log(`${source}에서 ${normalized.length}개 지진 데이터 가져옴`);
+    console.log(`${source}?먯꽌 ${normalized.length}媛?吏�吏??곗씠??媛�?몄샂`);
     return normalized;
     
   } catch (error) {
-    console.error(`${source} 데이터 가져오기 오류:`, error);
+    console.error(`${source} ?곗씠??媛�?몄삤湲??ㅻ쪟:`, error);
     return [];
   }
 }
 
 /**
- * 모든 기관에서 지진 데이터 가져오기
- * @returns {Promise<Array>} 통합된 지진 데이터 배열
+ * 紐⑤뱺 湲곌??먯꽌 吏�吏??곗씠??媛�?몄삤湲? * @returns {Promise<Array>} ?듯빀??吏�吏??곗씠??諛곗뿴
  */
 async function fetchAllEarthquakeData() {
   try {
-    // 모든 기관에서 병렬로 데이터 가져오기
-    const sources = ['USGS', 'EMSC'];
+    // 紐⑤뱺 湲곌??먯꽌 蹂묐젹濡??곗씠??媛�?몄삤湲?    const sources = ['USGS'];
     const promises = sources.map(source => fetchEarthquakeData(source));
     
     const results = await Promise.allSettled(promises);
@@ -240,31 +280,31 @@ async function fetchAllEarthquakeData() {
       if (result.status === 'fulfilled') {
         allEarthquakes.push(...result.value);
       } else {
-        console.error(`${source} 데이터 가져오기 실패:`, result.reason);
+        console.error(`${source} ?곗씠??媛�?몄삤湲??ㅽ뙣:`, result.reason);
       }
     });
     
-    // 중복 제거
+    // 以묐났 ?쒓굅
     const uniqueEarthquakes = removeDuplicateEarthquakes(allEarthquakes);
     
-    // 최신순으로 정렬
+    // 理쒖떊?쒖쑝濡??뺣젹
     uniqueEarthquakes.sort((a, b) => 
       new Date(b.time) - new Date(a.time)
     );
     
-    console.log(`총 ${uniqueEarthquakes.length}개의 고유한 지진 데이터 수집 완료`);
+    console.log(`珥?${uniqueEarthquakes.length}媛쒖쓽 怨좎쑀??吏�吏??곗씠???섏쭛 ?꾨즺`);
     return uniqueEarthquakes;
     
   } catch (error) {
-    console.error('지진 데이터 수집 중 오류:', error);
+    console.error('吏�吏??곗씠???섏쭛 以??ㅻ쪟:', error);
     return [];
   }
 }
 
 /**
- * 최근 지진 데이터만 필터링 (최근 24시간)
- * @param {Array} earthquakes - 지진 데이터 배열
- * @returns {Array} 최근 지진 데이터 배열
+ * 理쒓렐 吏�吏??곗씠?곕쭔 ?꾪꽣留?(理쒓렐 24?쒓컙)
+ * @param {Array} earthquakes - 吏�吏??곗씠??諛곗뿴
+ * @returns {Array} 理쒓렐 吏�吏??곗씠??諛곗뿴
  */
 function filterRecentEarthquakes(earthquakes) {
   if (!earthquakes || earthquakes.length === 0) {
@@ -279,7 +319,7 @@ function filterRecentEarthquakes(earthquakes) {
   );
 }
 
-// 전역으로 내보내기
+// ?꾩뿭?쇰줈 ?대낫?닿린
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     fetchAllEarthquakeData,
@@ -289,7 +329,7 @@ if (typeof module !== 'undefined' && module.exports) {
     filterRecentEarthquakes
   };
 } else if (typeof self !== 'undefined') {
-  // Service Worker 환경
+  // Service Worker ?섍꼍
   self.EarthquakeService = {
     fetchAllEarthquakeData,
     fetchEarthquakeData,
@@ -298,7 +338,7 @@ if (typeof module !== 'undefined' && module.exports) {
     filterRecentEarthquakes
   };
 } else {
-  // 일반 브라우저 환경
+  // ?쇰컲 釉뚮씪?곗? ?섍꼍
   window.EarthquakeService = {
     fetchAllEarthquakeData,
     fetchEarthquakeData,
@@ -307,3 +347,5 @@ if (typeof module !== 'undefined' && module.exports) {
     filterRecentEarthquakes
   };
 }
+
+
