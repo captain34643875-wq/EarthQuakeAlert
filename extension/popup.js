@@ -1,7 +1,8 @@
-// popup.js
+﻿﻿﻿// popup.js
 // - popup.html이 열릴 때 chrome.storage.local에 저장된 최근 지진 리스트를 읽어와 화면에 표시한다.
 // - 새로 고침 버튼을 누르면 background 서비스 워커에 메시지를 보내 즉시 갱신을 요청한다.
 // - isNew 플래그가 true인 지진은 빨간 경고 스타일로 강조한다.
+
 
 const STORAGE_KEYS = {
   RECENT_EARTHQUAKES: "recentEarthquakes"
