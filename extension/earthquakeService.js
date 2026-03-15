@@ -78,8 +78,37 @@ function normalizeEMSCData(data) {
     const geom = feature.geometry || {};
     const coords = geom.coordinates || [];
     
+    // EMSC 데이터에서 위치 정보 추출 (다양한 필드 확인)
+    const location = props.description || 
+                    props.place || 
+                    props.title || 
+                    props.flynn_region ||
+                    props.region ||
+                    props.flynnRegion ||
+                    props.text ||
+                    props.label ||
+                    'Unknown Location';
+    
+    // EMSC ID 추출
+    const emscId = props.id || 
+                  props.eventid || 
+                  props.unid || 
+                  props.source_id || 
+                  feature.id;
+    
+    // EMSC URL 생성
+    let url = props.url;
+    if (!url && emscId) {
+      // EMSC 상세 페이지 URL 형식
+      if (typeof emscId === 'string' && emscId.includes('_')) {
+        url = `https://www.seismicportal.eu/fdsnws/event/1/query?format=eventtxt&eventid=${emscId}`;
+      } else {
+        url = `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${emscId}`;
+      }
+    }
+    
     return {
-      location: props.description || props.place || props.title || 'Unknown Location',
+      location: location,
       magnitude: props.mag || 0,
       depth: coords[2] || 0,
       time: new Date(props.time).toISOString(),
@@ -87,7 +116,7 @@ function normalizeEMSCData(data) {
       id: `EMSC_${feature.id || Date.now()}`,
       latitude: coords[1],
       longitude: coords[0],
-      url: props.url
+      url: url
     };
   });
 }
