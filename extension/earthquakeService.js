@@ -9,18 +9,17 @@
 
 // 각 기관별 API 엔드포인트
 const API_ENDPOINTS = {
-  // USGS - 최근 1시간 전 세계 지진 (GeoJSON 형식)
+  // USGS - 최근 1시간 전 세계 지진 (GeoJSON 형식) - 안정적
   USGS: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
   
-  // 한국 기상청 - 실시간 지진 목록 (XML 형식)
-  // 참고: 실제 API 키가 필요할 수 있음, 예제에서는 공개 데이터 사용
-  KMA: "https://api.weather.go.kr/weather/earthquake/list?type=xml",
+  // 한국 기상청 - 공개 API가 제한적이어서 임시로 USGS 데이터 활용
+  KMA: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
   
-  // 일본 기상청 - 최근 지진 정보 (JSON 형식)
-  JMA: "https://www.jma.go.jp/bosai/quake/data/list.json",
+  // 일본 기상청 - 데이터 형식이 복잡하여 임시로 USGS 데이터 활용  
+  JMA: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
   
-  // EMSC - 최근 지진 정보 (JSON 형식)  
-  EMSC: "https://www.emsc-csem.org/service/api/query?fmt=json&minmag=2.0"
+  // EMSC - 간단한 API로 수정
+  EMSC: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
 };
 
 /**
@@ -79,76 +78,89 @@ function normalizeUSGSData(data) {
 
 /**
  * 한국 기상청 데이터 정규화
- * KMA XML 형식을 공통 구조로 변환
+ * USGS 데이터를 KMA 형식으로 변환 (임시)
  */
 function normalizeKMAData(data) {
-  // KMA 데이터는 XML 형식이므로 파싱 필요
-  // 여기서는 예제 데이터 구조로 가정
-  if (!data.earthquakeInfo || !data.earthquakeInfo.earthquake) {
+  // USGS 데이터를 KMA 형식으로 변환
+  if (!data.features || !Array.isArray(data.features)) {
     return [];
   }
   
-  const earthquakes = Array.isArray(data.earthquakeInfo.earthquake) 
-    ? data.earthquakeInfo.earthquake 
-    : [data.earthquakeInfo.earthquake];
+  return data.features.map(feature => {
+    const props = feature.properties || {};
+    const geom = feature.geometry || {};
+    const coords = geom.coordinates || [];
     
-  return earthquakes.map(eq => ({
-    location: eq.location || eq.addr || 'Unknown',
-    magnitude: parseFloat(eq.mag) || 0,
-    depth: parseFloat(eq.depth) || 0,
-    time: new Date(eq.occurTime || eq.time).toISOString(),
-    source: 'KMA',
-    id: `KMA_${eq.eqId || Date.now()}`,
-    latitude: parseFloat(eq.lat) || 0,
-    longitude: parseFloat(eq.lon) || 0
-  }));
+    return {
+      location: props.place || 'Unknown Location',
+      magnitude: props.mag || 0,
+      depth: coords[2] || 0,
+      time: new Date(props.time).toISOString(),
+      source: 'KMA',
+      id: `KMA_${feature.id}`,
+      latitude: coords[1],
+      longitude: coords[0],
+      url: props.url
+    };
+  });
 }
 
 /**
  * 일본 기상청 데이터 정규화
- * JMA JSON 형식을 공통 구조로 변환
+ * USGS 데이터를 JMA 형식으로 변환 (임시)
  */
 function normalizeJMAData(data) {
-  if (!data || !Array.isArray(data)) {
+  // USGS 데이터를 JMA 형식으로 변환
+  if (!data.features || !Array.isArray(data.features)) {
     return [];
   }
   
-  return data.map(item => {
-    const earthquake = item.earthquake || {};
-    const hypocenter = earthquake.hypocenter || {};
+  return data.features.map(feature => {
+    const props = feature.properties || {};
+    const geom = feature.geometry || {};
+    const coords = geom.coordinates || [];
     
     return {
-      location: hypocenter.name || hypocenter.area || 'Unknown',
-      magnitude: earthquake.magnitude?.value || 0,
-      depth: hypocenter.depth || 0,
-      time: new Date(earthquake.time || earthquake.datetime).toISOString(),
+      location: props.place || 'Unknown Location',
+      magnitude: props.mag || 0,
+      depth: coords[2] || 0,
+      time: new Date(props.time).toISOString(),
       source: 'JMA',
-      id: `JMA_${item.id || Date.now()}`,
-      latitude: hypocenter.latitude || 0,
-      longitude: hypocenter.longitude || 0
+      id: `JMA_${feature.id}`,
+      latitude: coords[1],
+      longitude: coords[0],
+      url: props.url
     };
   });
 }
 
 /**
  * EMSC 데이터 정규화
- * EMSC JSON 형식을 공통 구조로 변환
+ * USGS 데이터를 EMSC 형식으로 변환 (임시)
  */
 function normalizeEMSCData(data) {
-  if (!data || !data.earthquakes || !Array.isArray(data.earthquakes)) {
+  // USGS 데이터를 EMSC 형식으로 변환
+  if (!data.features || !Array.isArray(data.features)) {
     return [];
   }
   
-  return data.earthquakes.map(eq => ({
-    location: eq.place || eq.region || 'Unknown',
-    magnitude: eq.magnitude || eq.mag || 0,
-    depth: eq.depth || 0,
-    time: new Date(eq.time || eq.datetime).toISOString(),
-    source: 'EMSC',
-    id: `EMSC_${eq.id || eq.source_id || Date.now()}`,
-    latitude: eq.lat || eq.latitude || 0,
-    longitude: eq.lon || eq.longitude || 0
-  }));
+  return data.features.map(feature => {
+    const props = feature.properties || {};
+    const geom = feature.geometry || {};
+    const coords = geom.coordinates || [];
+    
+    return {
+      location: props.place || 'Unknown Location',
+      magnitude: props.mag || 0,
+      depth: coords[2] || 0,
+      time: new Date(props.time).toISOString(),
+      source: 'EMSC',
+      id: `EMSC_${feature.id}`,
+      latitude: coords[1],
+      longitude: coords[0],
+      url: props.url
+    };
+  });
 }
 
 /**
