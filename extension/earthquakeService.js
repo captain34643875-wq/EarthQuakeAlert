@@ -11,7 +11,7 @@ const API_ENDPOINTS = {
   USGS: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
   
   // EMSC FDSN API - 최근 지진 데이터 (GeoJSON 형식)
-  EMSC: "https://www.seismicportal.eu/fdsnws/event/1/query?format=geojson&limit=20&minmagnitude=2.0"
+  EMSC: "https://www.seismicportal.eu/fdsnws/event/1/query?format=geojson&limit=50&orderby=time"
 };
 
 /**
@@ -88,7 +88,7 @@ function normalizeEMSCData(data) {
       id: `EMSC_${feature.id}`,
       latitude: coords[1],
       longitude: coords[0],
-      url: props.url || `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${feature.id}`
+      url: `https://www.emsc-csem.org/Earthquake_information/earthquake.php?id=${feature.id}`
     };
   });
 }
