@@ -140,6 +140,25 @@ function renderEarthquakeList(earthquakes) {
       detailsEl.appendChild(linkLine);
     }
 
+    // 개별 복사 버튼
+    const copyButton = document.createElement("button");
+    copyButton.className = "quake-copy-button";
+    copyButton.textContent = "복사";
+    copyButton.addEventListener("click", async (e) => {
+      e.stopPropagation(); // 이벤트 버블링 방지
+      const success = await copyIndividualEarthquake(quake);
+      if (success) {
+        const originalText = copyButton.textContent;
+        copyButton.textContent = "복사됨!";
+        copyButton.classList.add("copied");
+        setTimeout(() => {
+          copyButton.textContent = originalText;
+          copyButton.classList.remove("copied");
+        }, 2000);
+      }
+    });
+    detailsEl.appendChild(copyButton);
+
     itemEl.appendChild(headerEl);
     itemEl.appendChild(detailsEl);
 
@@ -157,18 +176,72 @@ async function loadAndRenderEarthquakes() {
 
     if (!earthquakes || earthquakes.length === 0) {
       setStatusText("최근 1시간 이내 지진 정보가 없습니다.");
-    } else {
-      // 가장 최신 이벤트의 시간을 상태 영역에 표시
-      const newest = earthquakes[0];
-      const time = newest.time ? new Date(newest.time) : null;
-      const timeStr = time ? time.toLocaleString() : "알 수 없음";
-      setStatusText(`최근 업데이트 기준: ${timeStr}`);
+      renderEarthquakeList([]);
+      return;
     }
 
-    renderEarthquakeList(earthquakes);
+    // 규모 필터링 적용
+    const magnitudeFilter = document.getElementById("magnitudeFilter");
+    const minMagnitude = parseFloat(magnitudeFilter.value) || 0;
+    const filteredEarthquakes = filterByMagnitude(earthquakes, minMagnitude);
+
+    // 가장 최신 이벤트의 시간을 상태 영역에 표시
+    const newest = earthquakes[0];
+    const time = newest.time ? new Date(newest.time) : null;
+    const timeStr = time ? time.toLocaleString() : "알 수 없음";
+    
+    const filterText = minMagnitude > 0 ? ` (M${minMagnitude} 이상)` : '';
+    setStatusText(`최근 업데이트 기준: ${timeStr}${filterText}`);
+
+    renderEarthquakeList(filteredEarthquakes);
   } catch (error) {
     console.error("지진 데이터 로드 중 오류:", error);
     setStatusText("데이터를 불러오는 중 오류가 발생했습니다.", "error");
+  }
+}
+
+/**
+ * 규모 필터링 적용
+ * @param {Array} earthquakes - 전체 지진 데이터
+ * @param {number} minMagnitude - 최소 규모
+ * @returns {Array} 필터링된 지진 데이터
+ */
+function filterByMagnitude(earthquakes, minMagnitude) {
+  if (!earthquakes || minMagnitude <= 0) {
+    return earthquakes;
+  }
+  
+  return earthquakes.filter(quake => 
+    typeof quake.magnitude === 'number' && quake.magnitude >= minMagnitude
+  );
+}
+
+/**
+ * 개별 지진 정보 복사
+ * @param {Object} earthquake - 지진 정보 객체
+ */
+async function copyIndividualEarthquake(earthquake) {
+  try {
+    const location = earthquake.location || earthquake.place || '알 수 없는 위치';
+    const magnitude = typeof earthquake.magnitude === 'number' ? earthquake.magnitude.toFixed(1) : '?';
+    
+    // 예상최대진도 추정
+    let intensity = '?';
+    if (typeof earthquake.magnitude === 'number') {
+      if (earthquake.magnitude >= 6.0) intensity = '진도 6 이상';
+      else if (earthquake.magnitude >= 5.0) intensity = '진도 5-6';
+      else if (earthquake.magnitude >= 4.0) intensity = '진도 4-5';
+      else if (earthquake.magnitude >= 3.0) intensity = '진도 3-4';
+      else intensity = '진도 3 미만';
+    }
+    
+    const copyText = `[지진속보] 진원지: ${location} / 추정규모: ${magnitude} / 예상최대진도: ${intensity}`;
+    
+    await navigator.clipboard.writeText(copyText);
+    return true;
+  } catch (error) {
+    console.error('개별 복사 실패:', error);
+    return false;
   }
 }
 
@@ -204,6 +277,16 @@ function formatEarthquakeForCopy(earthquakes) {
 }
 
 /**
+ * 규모 필터링 설정
+ */
+function setupMagnitudeFilter() {
+  const filter = document.getElementById("magnitudeFilter");
+  filter.addEventListener("change", () => {
+    loadAndRenderEarthquakes();
+  });
+}
+
+/**
  * 복사 버튼 설정
  */
 function setupCopyButton() {
@@ -211,7 +294,13 @@ function setupCopyButton() {
   btn.addEventListener("click", async () => {
     try {
       const earthquakes = await getRecentEarthquakes();
-      const copyText = formatEarthquakeForCopy(earthquakes);
+      
+      // 현재 필터링된 규모에 맞게 복사
+      const magnitudeFilter = document.getElementById("magnitudeFilter");
+      const minMagnitude = parseFloat(magnitudeFilter.value) || 0;
+      const filteredEarthquakes = filterByMagnitude(earthquakes, minMagnitude);
+      
+      const copyText = formatEarthquakeForCopy(filteredEarthquakes);
       
       // 클립보드에 복사
       await navigator.clipboard.writeText(copyText);
@@ -255,6 +344,7 @@ function setupRefreshButton() {
 // DOM이 준비되면 이벤트 바인딩 및 데이터 로드 실행
 document.addEventListener("DOMContentLoaded", () => {
   setupRefreshButton();
+  setupMagnitudeFilter();
   setupCopyButton();
   loadAndRenderEarthquakes();
 });

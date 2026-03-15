@@ -6,7 +6,7 @@
  * - popup에서 사용할 수 있도록 최근 지진 목록을 chrome.storage.local에 저장한다
  */
 
-// earthquakeService.js import (Chrome Extension 환경)
+// earthquakeService.js의 함수들을 Service Worker 환경에서 사용할 수 있도록 import
 importScripts('earthquakeService.js');
 
 // 알람 이름 (임의의 고유 문자열)
@@ -120,7 +120,7 @@ async function checkForNewEarthquakes() {
     console.log('지진 데이터 확인 시작...');
     
     // 모든 기관에서 지진 데이터 가져오기
-    const allEarthquakes = await EarthquakeService.fetchAllEarthquakeData();
+    const allEarthquakes = await self.EarthquakeService.fetchAllEarthquakeData();
     
     if (!allEarthquakes || allEarthquakes.length === 0) {
       console.log('가져온 지진 데이터가 없음');
@@ -128,7 +128,7 @@ async function checkForNewEarthquakes() {
     }
 
     // 최근 24시간 지진만 필터링
-    const recentEarthquakes = EarthquakeService.filterRecentEarthquakes(allEarthquakes);
+    const recentEarthquakes = self.EarthquakeService.filterRecentEarthquakes(allEarthquakes);
     
     const lastEventTime = await getLastEventTime();
 

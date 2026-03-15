@@ -84,6 +84,42 @@ body {
   color: #b3261e;
 }
 
+/* 필터링 영역 */
+.filter-section {
+  margin-bottom: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-controls label {
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.magnitude-filter {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: #fff;
+  color: #374151;
+  cursor: pointer;
+}
+
+.magnitude-filter:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
 /* 리스트 영역 */
 .list-section {
   margin-top: 4px;
@@ -170,6 +206,33 @@ body {
 
 .quake-link:hover {
   text-decoration: underline;
+}
+
+/* 개별 복사 버튼 */
+.quake-copy-button {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background-color: #f9fafb;
+  color: #374151;
+  font-size: 10px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.quake-copy-button:hover {
+  background-color: #e5e7eb;
+}
+
+.quake-copy-button:active {
+  background-color: #d1d5db;
+}
+
+.quake-copy-button.copied {
+  background-color: #10b981;
+  color: white;
+  border-color: #10b981;
 }
 
 /* 빈 리스트 문구 */

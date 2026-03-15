@@ -22,6 +22,21 @@
         <span id="statusText" class="status-text">데이터 불러오는 중...</span>
       </section>
 
+      <!-- 필터링 옵션 영역 -->
+      <section class="filter-section">
+        <div class="filter-controls">
+          <label for="magnitudeFilter">최소 규모:</label>
+          <select id="magnitudeFilter" class="magnitude-filter">
+            <option value="0">모든 규모</option>
+            <option value="2.0">M2.0 이상</option>
+            <option value="3.0">M3.0 이상</option>
+            <option value="4.0" selected>M4.0 이상</option>
+            <option value="5.0">M5.0 이상</option>
+            <option value="6.0">M6.0 이상</option>
+          </select>
+        </div>
+      </section>
+
       <!-- 최근 지진 리스트 영역 -->
       <section class="list-section">
         <!-- 지진 항목이 동적으로 여기 들어간다 -->
@@ -43,6 +58,7 @@
     </div>
 
     <!-- 팝업 스크립트 -->
+    <script src="earthquakeService.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

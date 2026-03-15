@@ -294,8 +294,17 @@ if (typeof module !== 'undefined' && module.exports) {
     normalizeEarthquakeData,
     filterRecentEarthquakes
   };
+} else if (typeof self !== 'undefined') {
+  // Service Worker 환경
+  self.EarthquakeService = {
+    fetchAllEarthquakeData,
+    fetchEarthquakeData,
+    removeDuplicateEarthquakes,
+    normalizeEarthquakeData,
+    filterRecentEarthquakes
+  };
 } else {
-  // Chrome Extension 환경
+  // 일반 브라우저 환경
   window.EarthquakeService = {
     fetchAllEarthquakeData,
     fetchEarthquakeData,
