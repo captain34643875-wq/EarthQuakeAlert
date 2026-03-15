@@ -59,8 +59,17 @@ function renderEarthquakeList(earthquakes) {
 
   earthquakes.forEach((quake) => {
     const itemEl = document.createElement("li");
+    
+    // 규모별 색상 클래스 결정
+    let magnitudeClass = '';
+    if (typeof quake.magnitude === 'number') {
+      if (quake.magnitude >= 6.0) magnitudeClass = 'magnitude-high';
+      else if (quake.magnitude >= 4.0) magnitudeClass = 'magnitude-medium';
+      else magnitudeClass = 'magnitude-low';
+    }
+    
     // 새 지진(isNew)이면 경고 스타일 적용
-    itemEl.className = `quake-item ${quake.isNew ? "quake-item-new" : ""}`;
+    itemEl.className = `quake-item ${magnitudeClass} ${quake.isNew ? "quake-item-new" : ""}`;
 
     const headerEl = document.createElement("div");
     headerEl.className = "quake-header";
@@ -76,7 +85,7 @@ function renderEarthquakeList(earthquakes) {
     // 위치 텍스트
     const placeEl = document.createElement("span");
     placeEl.className = "quake-place";
-    placeEl.textContent = quake.place || "위치 정보 없음";
+    placeEl.textContent = quake.location || quake.place || "위치 정보 없음";
 
     headerEl.appendChild(magEl);
     headerEl.appendChild(placeEl);
@@ -109,9 +118,14 @@ function renderEarthquakeList(earthquakes) {
     const coordLine = document.createElement("div");
     coordLine.textContent = `좌표(위도,경도): ${coordsStr}`;
 
+    // 데이터 출처
+    const sourceLine = document.createElement("div");
+    sourceLine.textContent = `출처: ${quake.source || '알 수 없음'}`;
+
     detailsEl.appendChild(timeLine);
     detailsEl.appendChild(depthLine);
     detailsEl.appendChild(coordLine);
+    detailsEl.appendChild(sourceLine);
 
     // (선택) 상세 페이지 링크 (USGS)
     if (quake.url) {
@@ -159,6 +173,68 @@ async function loadAndRenderEarthquakes() {
 }
 
 /**
+ * 지진 데이터를 지정된 형식으로 변환하여 복사
+ * @param {Array} earthquakes - 지진 데이터 배열
+ * @returns {string} 복사할 텍스트
+ */
+function formatEarthquakeForCopy(earthquakes) {
+  if (!earthquakes || earthquakes.length === 0) {
+    return '[지진속보] 최근 지진 정보가 없습니다.';
+  }
+  
+  const lines = earthquakes.map(quake => {
+    const location = quake.location || quake.place || '알 수 없는 위치';
+    const magnitude = typeof quake.magnitude === 'number' ? quake.magnitude.toFixed(1) : '?';
+    const depth = typeof quake.depth === 'number' ? quake.depth.toFixed(1) : '?';
+    
+    // 예상최대진도는 규모를 기반으로 간단히 추정 (실제와 다를 수 있음)
+    let intensity = '?';
+    if (typeof quake.magnitude === 'number') {
+      if (quake.magnitude >= 6.0) intensity = '진도 6 이상';
+      else if (quake.magnitude >= 5.0) intensity = '진도 5-6';
+      else if (quake.magnitude >= 4.0) intensity = '진도 4-5';
+      else if (quake.magnitude >= 3.0) intensity = '진도 3-4';
+      else intensity = '진도 3 미만';
+    }
+    
+    return `[지진속보] 진원지: ${location} / 추정규모: ${magnitude} / 예상최대진도: ${intensity}`;
+  });
+  
+  return lines.join('\n');
+}
+
+/**
+ * 복사 버튼 설정
+ */
+function setupCopyButton() {
+  const btn = document.getElementById("copyAllButton");
+  btn.addEventListener("click", async () => {
+    try {
+      const earthquakes = await getRecentEarthquakes();
+      const copyText = formatEarthquakeForCopy(earthquakes);
+      
+      // 클립보드에 복사
+      await navigator.clipboard.writeText(copyText);
+      
+      // 버튼 상태 변경
+      const originalText = btn.textContent;
+      btn.textContent = '복사 완료!';
+      btn.classList.add('copied');
+      
+      // 2초 후 원래 상태로 복귀
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('copied');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('복사 실패:', error);
+      setStatusText('복사에 실패했습니다.', 'error');
+    }
+  });
+}
+
+/**
  * 새로 고침 버튼 클릭 시 background 서비스 워커에
  * "지금 바로 지진 데이터 다시 확인" 요청을 보내는 함수
  */
@@ -179,6 +255,7 @@ function setupRefreshButton() {
 // DOM이 준비되면 이벤트 바인딩 및 데이터 로드 실행
 document.addEventListener("DOMContentLoaded", () => {
   setupRefreshButton();
+  setupCopyButton();
   loadAndRenderEarthquakes();
 });
 
