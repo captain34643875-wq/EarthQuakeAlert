@@ -79,17 +79,59 @@ function normalizeEMSCData(data) {
     const props = feature.properties || {};
     const geom = feature.geometry || {};
     const coords = geom.coordinates || [];
+    const latitude = coords[1];
+    const longitude = coords[0];
+
+    const hasLatLon =
+      typeof latitude === "number" && typeof longitude === "number";
+
+    const pickFirstNonEmpty = (...values) =>
+      values.find((value) => typeof value === "string" && value.trim().length > 0);
+
+    const location =
+      pickFirstNonEmpty(
+        props.description,
+        props.place,
+        props.title,
+        props.flynn_region,
+        props.region,
+        props.flynnRegion
+      ) ||
+      (hasLatLon
+        ? `위도 ${latitude.toFixed(2)}, 경도 ${longitude.toFixed(2)}`
+        : "Unknown Location");
+
+    if (location === "Unknown Location") {
+      console.debug("[EMSC] location fallback to Unknown", {
+        id: feature.id,
+        propsKeys: Object.keys(props),
+        coords
+      });
+    }
+
+    const emscId =
+      props.id ||
+      props.eventid ||
+      props.unid ||
+      props.source_id ||
+      feature.id;
+
+    const url =
+      props.url ||
+      (emscId
+        ? `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${emscId}`
+        : undefined);
     
     return {
-      location: props.description || props.place || props.title || 'Unknown Location',
+      location,
       magnitude: props.mag || 0,
       depth: coords[2] || 0,
       time: new Date(props.time).toISOString(),
       source: 'EMSC',
       id: `EMSC_${feature.id || Date.now()}`,
-      latitude: coords[1],
-      longitude: coords[0],
-      url: props.url
+      latitude,
+      longitude,
+      url
     };
   });
 }

@@ -120,7 +120,20 @@ function renderEarthquakeList(earthquakes) {
 
     // 데이터 출처
     const sourceLine = document.createElement("div");
-    sourceLine.textContent = `출처: ${quake.source || '알 수 없음'}`;
+    const sourceLabel = document.createElement("span");
+    sourceLabel.textContent = `출처: ${quake.source || "알 수 없음"}`;
+    sourceLine.appendChild(sourceLabel);
+
+    if (quake.url) {
+      const sourceLink = document.createElement("a");
+      sourceLink.href = quake.url;
+      sourceLink.target = "_blank";
+      sourceLink.rel = "noopener noreferrer";
+      sourceLink.textContent = "출처 링크";
+      sourceLink.className = "quake-link";
+      sourceLine.appendChild(document.createTextNode(" "));
+      sourceLine.appendChild(sourceLink);
+    }
 
     detailsEl.appendChild(timeLine);
     detailsEl.appendChild(depthLine);
@@ -134,7 +147,7 @@ function renderEarthquakeList(earthquakes) {
       linkEl.href = quake.url;
       linkEl.target = "_blank";
       linkEl.rel = "noopener noreferrer";
-      linkEl.textContent = "상세 보기 (USGS)";
+      linkEl.textContent = `상세 보기 (${quake.source || "출처"})`;
       linkEl.className = "quake-link";
       linkLine.appendChild(linkEl);
       detailsEl.appendChild(linkLine);
