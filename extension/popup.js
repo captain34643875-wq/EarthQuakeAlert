@@ -237,8 +237,31 @@ async function copyIndividualEarthquake(earthquake) {
     
     const copyText = `[지진속보] 진원지: ${location} / 추정규모: ${magnitude} / 예상최대진도: ${intensity}`;
     
-    await navigator.clipboard.writeText(copyText);
-    return true;
+    // 클립보드 API가 지원되는지 확인
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(copyText);
+      return true;
+    } else {
+      // 대체 방법: document.execCommand 사용
+      const textArea = document.createElement('textarea');
+      textArea.value = copyText;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return true;
+      } catch (fallbackError) {
+        document.body.removeChild(textArea);
+        console.error('대체 복사 방법 실패:', fallbackError);
+        return false;
+      }
+    }
   } catch (error) {
     console.error('개별 복사 실패:', error);
     return false;
@@ -302,8 +325,28 @@ function setupCopyButton() {
       
       const copyText = formatEarthquakeForCopy(filteredEarthquakes);
       
-      // 클립보드에 복사
-      await navigator.clipboard.writeText(copyText);
+      // 클립보드 API가 지원되는지 확인
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(copyText);
+      } else {
+        // 대체 방법: document.execCommand 사용
+        const textArea = document.createElement('textarea');
+        textArea.value = copyText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        } catch (fallbackError) {
+          document.body.removeChild(textArea);
+          throw new Error('클립보드 복사 실패');
+        }
+      }
       
       // 버튼 상태 변경
       const originalText = btn.textContent;
