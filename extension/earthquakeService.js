@@ -89,12 +89,19 @@ function normalizeEMSCData(data) {
                     props.label ||
                     'Unknown Location';
     
+    // 디버깅을 위해 EMSC 데이터 구조 출력
+    console.log('EMSC feature:', feature);
+    console.log('EMSC props:', props);
+    console.log('EMS props keys:', Object.keys(props));
+    
     // EMSC ID 추출
     const emscId = props.id || 
                   props.eventid || 
                   props.unid || 
                   props.source_id || 
                   feature.id;
+    
+    console.log('EMSC ID found:', emscId);
     
     // EMSC URL 생성
     let url = props.url;
