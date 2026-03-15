@@ -100,7 +100,7 @@ function normalizeEMSCData(data) {
     let url = props.url;
     if (!url && emscId) {
       // EMSC 상세 페이지 URL 형식
-      url = `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${emscId}`;
+      url = `https://www.emsc-csem.org/Earthquake_information/earthquake.php?id=${emscId}`;
     }
     
     return {
