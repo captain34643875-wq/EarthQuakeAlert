@@ -116,11 +116,20 @@ function normalizeEMSCData(data) {
       props.source_id ||
       feature.id;
 
-    const url =
-      props.url ||
-      (emscId
-        ? `https://www.emsc-csem.org/Earthquake_information/earthquake.php?id=${emscId}`
-        : undefined);
+    const normalizeEmscUrl = (rawUrl, id) => {
+      if (typeof rawUrl === "string" && rawUrl.trim().length > 0) {
+        return rawUrl.replace(
+          "/Earthquake_information/earthquake.php",
+          "/Earthquake/earthquake.php"
+        );
+      }
+      if (id) {
+        return `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${id}`;
+      }
+      return undefined;
+    };
+
+    const url = normalizeEmscUrl(props.url, emscId);
     
     return {
       location,
