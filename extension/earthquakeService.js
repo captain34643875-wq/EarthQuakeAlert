@@ -10,8 +10,8 @@ const API_ENDPOINTS = {
   // USGS - 최근 1시간 전 세계 지진 (GeoJSON 형식)
   USGS: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
   
-  // EMSC - 유럽 지진 데이터 (JSON 형식)
-  EMSC: "https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=20"
+  // EMSC FDSN API - 최근 지진 데이터 (GeoJSON 형식)
+  EMSC: "https://www.seismicportal.eu/fdsnws/event/1/query?format=geojson&limit=20&minmagnitude=2.0"
 };
 
 /**
@@ -66,10 +66,10 @@ function normalizeUSGSData(data) {
 
 /**
  * EMSC 데이터 정규화
- * EMSC JSON 형식을 공통 구조로 변환
+ * EMSC FDSN GeoJSON 형식을 공통 구조로 변환
  */
 function normalizeEMSCData(data) {
-  if (!data || !data.features || !Array.isArray(data.features)) {
+  if (!data.features || !Array.isArray(data.features)) {
     return [];
   }
   
@@ -78,48 +78,17 @@ function normalizeEMSCData(data) {
     const geom = feature.geometry || {};
     const coords = geom.coordinates || [];
     
-    // EMSC 데이터에서 위치 정보 추출 (다양한 필드 확인)
-    const location = props.description || 
-                    props.place || 
-                    props.title || 
-                    props.flynn_region ||
-                    props.region ||
-                    props.flynnRegion ||
-                    props.text ||
-                    props.label ||
-                    'Unknown Location';
-    
-    // 디버깅을 위해 EMSC 데이터 구조 출력
-    console.log('EMSC feature:', feature);
-    console.log('EMSC props:', props);
-    console.log('EMS props keys:', Object.keys(props));
-    
-    // EMSC ID 추출
-    const emscId = props.id || 
-                  props.eventid || 
-                  props.unid || 
-                  props.source_id || 
-                  feature.id;
-    
-    console.log('EMSC ID found:', emscId);
-    
-    // EMSC URL 생성
-    let url = props.url;
-    if (!url && emscId) {
-      // EMSC 상세 페이지 URL 형식
-      url = `https://www.emsc-csem.org/Earthquake_information/earthquake.php?id=${emscId}`;
-    }
-    
+    // EMSC FDSN GeoJSON은 USGS와 구조가 비슷함
     return {
-      location: location,
+      location: props.place || props.description || props.title || 'Unknown Location',
       magnitude: props.mag || 0,
       depth: coords[2] || 0,
       time: new Date(props.time).toISOString(),
       source: 'EMSC',
-      id: `EMSC_${feature.id || Date.now()}`,
+      id: `EMSC_${feature.id}`,
       latitude: coords[1],
       longitude: coords[0],
-      url: url
+      url: props.url || `https://www.emsc-csem.org/Earthquake/earthquake.php?id=${feature.id}`
     };
   });
 }
