@@ -79,7 +79,7 @@ extension/
 - 상태: ✅ 현재 지원 중
 
 ### EMSC (유럽-지중해 지진 센터)
-- 엔드포인트: `https://www.seismicportal.eu/fdsnws/event/1/query`
+- 엔드포인트: `https://www.seismicportal.eu/fdsnws/event/1/query?format=geojson&limit=50&orderby=time`
 - 데이터 형식: GeoJSON
 - 제공 범위: 유럽 및 지중해
 - 상태: 🔄 안정화 후 재활성화 예정
