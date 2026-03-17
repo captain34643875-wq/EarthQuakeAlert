@@ -8,10 +8,10 @@
 // 각 기관별 API 엔드포인트
 const API_ENDPOINTS = {
   // USGS - 최근 1시간 전 세계 지진 (GeoJSON 형식)
-  USGS: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
+  USGS: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
   
-  // EMSC FDSN API - 최근 지진 데이터 (GeoJSON 형식)
-  EMSC: "https://www.seismicportal.eu/fdsnws/event/1/query?format=geojson&limit=50&orderby=time"
+  // EMSC FDSN API - 일시 비활성화 (안정화 후 재활성화 예정)
+  // EMSC: "https://www.seismicportal.eu/fdsnws/event/1/query?format=geojson&limit=50&orderby=time"
 };
 
 /**
@@ -26,7 +26,8 @@ function normalizeEarthquakeData(rawData, source) {
       case 'USGS':
         return normalizeUSGSData(rawData);
       case 'EMSC':
-        return normalizeEMSCData(rawData);
+        // EMSC는 일시 비활성화
+        return [];
       default:
         return null;
     }
@@ -207,8 +208,8 @@ async function fetchEarthquakeData(source) {
  */
 async function fetchAllEarthquakeData() {
   try {
-    // 모든 기관에서 병렬로 데이터 가져오기
-    const sources = ['USGS', 'EMSC'];
+    // 안정성을 위해 USGS만 사용 (EMSC는 일시 비활성화)
+    const sources = ['USGS'];
     const promises = sources.map(source => fetchEarthquakeData(source));
     
     const results = await Promise.allSettled(promises);

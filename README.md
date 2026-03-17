@@ -6,7 +6,7 @@
 
 ### 다국적 지진 데이터 수집
 - **USGS** (미국 지질조사소) - 전 세계 지진 ✅ 현재 지원
-- **EMSC** (유럽-지중해 지진 센터) - 유럽 및 지중해 지진 ✅ 현재 지원 
+- **EMSC** (유럽-지중해 지진 센터) - 유럽 및 지중해 지진 🔄 안정화 후 재활성화 예정
 
 ### 실시간 알림 및 UI
 - **20초마다 자동 업데이트**
@@ -79,10 +79,10 @@ extension/
 - 상태: ✅ 현재 지원 중
 
 ### EMSC (유럽-지중해 지진 센터)
-- 엔드포인트: `https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=20`
-- 데이터 형식: JSON
+- 엔드포인트: `https://www.seismicportal.eu/fdsnws/event/1/query`
+- 데이터 형식: GeoJSON
 - 제공 범위: 유럽 및 지중해
-- 상태: ✅ 현재 지원 중
+- 상태: 🔄 안정화 후 재활성화 예정
 
 ### KMA (한국 기상청)
 - 엔드포인트: `https://api.weather.go.kr/weather/earthquake/list`
