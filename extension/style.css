@@ -58,6 +58,23 @@ body {
   margin-top: 2px;
 }
 
+.filter-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: #fff;
+  color: #374151;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
 .subtitle {
   margin: 2px 0 0;
   font-size: 11px;
