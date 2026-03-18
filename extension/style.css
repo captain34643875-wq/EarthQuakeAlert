@@ -42,6 +42,22 @@ body {
   color: #111;
 }
 
+.filter-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+.filter-note {
+  font-size: 10px;
+  color: #6b7280;
+  font-weight: normal;
+  display: block;
+  margin-top: 2px;
+}
+
 .subtitle {
   margin: 2px 0 0;
   font-size: 11px;
