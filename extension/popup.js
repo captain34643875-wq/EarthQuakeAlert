@@ -113,7 +113,7 @@ async function copyToClipboard(text) {
  */
 function setStatusText(text, type = "normal") {
   const statusTextEl = document.getElementById("statusText");
-  statusTextEl.textContent = text;
+  statusTextEl.innerHTML = text;
   statusTextEl.classList.toggle("status-error", type === "error");
 }
 
