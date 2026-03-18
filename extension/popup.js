@@ -318,7 +318,7 @@ function filterByMagnitude(earthquakes, minMagnitude) {
   return earthquakes.filter(quake => 
     typeof quake.magnitude === 'number' && quake.magnitude >= minMagnitude
   );
-
+}
 
 /**
  * Estimate intensity (simple heuristic)
