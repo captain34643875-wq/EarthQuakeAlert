@@ -257,7 +257,7 @@ async function loadAndRenderEarthquakes() {
         const newest = earthquakes[0];
         const quakeTimeStr = newest.time ? formatKoreanTime(newest.time) : "알 수 없음";
         const nowStr = formatKoreanTime(new Date().toISOString());
-        setStatusText(`오프라인 - 마지막 업데이트: ${quakeTimeStr} / 데이터 확인: ${nowStr} (캐시된 데이터)`);
+        setStatusText(`오프라인 - 마지막 업데이트: ${quakeTimeStr}<br>데이터 확인: ${nowStr} (캐시된 데이터)`);
         
         // 규모 필터링 적용
         const magnitudeFilter = document.getElementById("magnitudeFilter");
@@ -274,7 +274,7 @@ async function loadAndRenderEarthquakes() {
     const nowStr = formatKoreanTime(new Date().toISOString());
 
     if (!earthquakes || earthquakes.length === 0) {
-      setStatusText(`현재 발생한 지진은 없습니다. / 데이터 확인: ${nowStr}`);
+      setStatusText(`현재 발생한 지진은 없습니다.<br>데이터 확인: ${nowStr}`);
       renderEarthquakeList([]);
       return;
     }
@@ -285,7 +285,7 @@ async function loadAndRenderEarthquakes() {
     const filteredEarthquakes = filterByMagnitude(earthquakes, minMagnitude);
 
     if (filteredEarthquakes.length === 0) {
-      setStatusText(`현재 발생한 지진은 없습니다. (필터: M${minMagnitude} 이상) / 데이터 확인: ${nowStr}`);
+      setStatusText(`현재 발생한 지진은 없습니다. (필터: M${minMagnitude} 이상)<br>데이터 확인: ${nowStr}`);
       renderEarthquakeList([]);
       return;
     }
@@ -295,7 +295,7 @@ async function loadAndRenderEarthquakes() {
     const quakeTimeStr = newest.time ? formatKoreanTime(newest.time) : "알 수 없음";
     
     const filterText = minMagnitude > 0 ? ` (필터: M${minMagnitude} 이상)` : '';
-    setStatusText(`최근 지진: ${quakeTimeStr}${filterText} / 데이터 확인: ${nowStr}`);
+    setStatusText(`최근 지진: ${quakeTimeStr}${filterText}<br>데이터 확인: ${nowStr}`);
 
     renderEarthquakeList(filteredEarthquakes);
   } catch (error) {
