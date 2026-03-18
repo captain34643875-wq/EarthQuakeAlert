@@ -390,7 +390,25 @@ function formatEarthquakeForCopy(earthquakes) {
 function setupMagnitudeFilter() {
   const filter = document.getElementById("magnitudeFilter");
   filter.addEventListener("change", () => {
-    loadAndRenderEarthquakes();
+    // 필터 변경 시 즉시 UI 업데이트 (백그라운드 데이터 사용)
+    getRecentEarthquakes().then(earthquakes => {
+      const minMagnitude = parseFloat(filter.value) || 0;
+      const filteredEarthquakes = filterByMagnitude(earthquakes, minMagnitude);
+      
+      // 상태 텍스트 업데이트
+      const nowStr = formatKoreanTime(new Date().toISOString());
+      
+      if (filteredEarthquakes.length === 0) {
+        setStatusText(`현재 발생한 지진은 없습니다. (필터: M${minMagnitude} 이상)<br>데이터 확인: ${nowStr}`);
+      } else {
+        const newest = filteredEarthquakes[0];
+        const quakeTimeStr = newest.time ? formatKoreanTime(newest.time) : "알 수 없음";
+        const filterText = minMagnitude > 0 ? ` (필터: M${minMagnitude} 이상)` : '';
+        setStatusText(`최근 지진: ${quakeTimeStr}${filterText}<br>데이터 확인: ${nowStr}`);
+      }
+      
+      renderEarthquakeList(filteredEarthquakes);
+    });
   });
 }
 
@@ -450,6 +468,50 @@ function setupRefreshButton() {
       }
     );
   });
+}
+
+/**
+ * 백그라운드 메시지 수신 및 실시간 업데이트
+ */
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "UPDATE_STATUS") {
+    console.log("📨 실시간 업데이트 메시지 수신:", message.data);
+    updateUIFromBackground(message.data);
+    sendResponse({ ok: true });
+  }
+});
+
+/**
+ * 백그라운드 데이터로 UI 업데이트
+ * @param {Object} data - 백그라운드에서 받은 데이터
+ */
+function updateUIFromBackground(data) {
+  const { earthquakes, hasNewEarthquakes, newEarthquakeCount, lastCheckTime } = data;
+  
+  // 규모 필터링 적용
+  const magnitudeFilter = document.getElementById("magnitudeFilter");
+  const minMagnitude = parseFloat(magnitudeFilter.value) || 0;
+  const filteredEarthquakes = filterByMagnitude(earthquakes, minMagnitude);
+
+  // 상태 텍스트 업데이트
+  const nowStr = formatKoreanTime(lastCheckTime);
+  
+  if (filteredEarthquakes.length === 0) {
+    setStatusText(`현재 발생한 지진은 없습니다. (필터: M${minMagnitude} 이상)<br>데이터 확인: ${nowStr}`);
+  } else {
+    const newest = filteredEarthquakes[0];
+    const quakeTimeStr = newest.time ? formatKoreanTime(newest.time) : "알 수 없음";
+    const filterText = minMagnitude > 0 ? ` (필터: M${minMagnitude} 이상)` : '';
+    setStatusText(`최근 지진: ${quakeTimeStr}${filterText}<br>데이터 확인: ${nowStr}`);
+  }
+
+  // 지진 리스트 업데이트
+  renderEarthquakeList(filteredEarthquakes);
+  
+  // 새 지진 알림 (콘솔)
+  if (hasNewEarthquakes) {
+    console.log(`🚨 새 지진 ${newEarthquakeCount}개 감지됨 - UI 자동 업데이트 완료`);
+  }
 }
 
 // DOM이 준비되면 이벤트 바인딩 및 데이터 로드 실행

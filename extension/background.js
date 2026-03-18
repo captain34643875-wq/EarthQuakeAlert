@@ -247,6 +247,19 @@ async function checkForNewEarthquakes() {
 
     await setRecentEarthquakes(recentWithFlag);
     
+    // 🚨 팝업이 열려있으면 실시간 업데이트 메시지 전송
+    chrome.runtime.sendMessage({
+      type: "UPDATE_STATUS",
+      data: {
+        earthquakes: recentWithFlag,
+        hasNewEarthquakes: newEarthquakes.length > 0,
+        newEarthquakeCount: newEarthquakes.length,
+        lastCheckTime: new Date().toISOString()
+      }
+    }).catch(() => {
+      // 팝업이 닫혀있으면 무시 (정상)
+    });
+    
   } catch (error) {
     console.error("지진 체크 오류:", error);
   }
