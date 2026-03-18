@@ -31,6 +31,82 @@ function getRecentEarthquakes() {
 }
 
 /**
+ * 한국 시간 형식으로 변환하는 함수
+ * @param {string} isoTime - ISO 시간 문자열
+ * @returns {string} 한국 시간 형식
+ */
+function formatKoreanTime(isoTime) {
+  const date = new Date(isoTime);
+  return date.toLocaleString('ko-KR', { 
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+}
+
+/**
+ * 상대 시간을 계산하는 함수
+ * @param {string} isoTime - ISO 시간 문자열
+ * @returns {string} 상대 시간 (예: "10초 전", "2분 전")
+ */
+function getRelativeTime(isoTime) {
+  const now = new Date();
+  const quakeTime = new Date(isoTime);
+  const diffMs = now - quakeTime;
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) return `${diffSecs}초 전`;
+  if (diffMins < 60) return `${diffMins}분 전`;
+  if (diffHours < 24) return `${diffHours}시간 전`;
+  return `${diffDays}일 전`;
+}
+
+/**
+ * 복사 기능을 위한 유틸리티 함수
+ * @param {string} text - 복사할 텍스트
+ * @returns {Promise<boolean>} 성공 여부
+ */
+async function copyToClipboard(text) {
+  try {
+    // 클립보드 API가 지원되는지 확인
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } else {
+      // 대체 방법: document.execCommand 사용
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return true;
+      } catch (fallbackError) {
+        document.body.removeChild(textArea);
+        console.error('대체 복사 방법 실패:', fallbackError);
+        return false;
+      }
+    }
+  } catch (error) {
+    console.error('복사 실패:', error);
+    return false;
+  }
+}
+
+/**
  * 상태 텍스트를 갱신하는 헬퍼 함수
  * @param {string} text - 표시할 텍스트
  * @param {("normal"|"error")} [type="normal"] - 상태 유형 (일반/오류)
@@ -96,7 +172,8 @@ function renderEarthquakeList(earthquakes) {
     detailsEl.className = "quake-details";
 
     const time = quake.time ? new Date(quake.time) : null;
-    const timeStr = time ? time.toLocaleString() : "알 수 없음";
+    const timeStr = time ? formatKoreanTime(quake.time) : "알 수 없음";
+    const relativeTimeStr = time ? getRelativeTime(quake.time) : "";
 
     const depthStr =
       typeof quake.depth === "number"
@@ -111,7 +188,7 @@ function renderEarthquakeList(earthquakes) {
 
     // 각 정보는 한 줄씩 표시
     const timeLine = document.createElement("div");
-    timeLine.textContent = `발생 시각: ${timeStr}`;
+    timeLine.textContent = `발생 시각: ${timeStr}${relativeTimeStr ? ` (${relativeTimeStr})` : ''}`;
 
     const depthLine = document.createElement("div");
     depthLine.textContent = `깊이: ${depthStr}`;
@@ -172,6 +249,25 @@ function renderEarthquakeList(earthquakes) {
  */
 async function loadAndRenderEarthquakes() {
   try {
+    // 오프라인 상태 확인
+    if (!navigator.onLine) {
+      setStatusText("오프라인 상태 - 마지막으로 저장된 데이터 표시 중...", "normal");
+      const earthquakes = await getRecentEarthquakes();
+      if (earthquakes && earthquakes.length > 0) {
+        const newest = earthquakes[0];
+        const timeStr = newest.time ? formatKoreanTime(newest.time) : "알 수 없음";
+        setStatusText(`오프라인 - 마지막 업데이트: ${timeStr} (캐시된 데이터)`);
+        
+        // 규모 필터링 적용
+        const magnitudeFilter = document.getElementById("magnitudeFilter");
+        const minMagnitude = parseFloat(magnitudeFilter.value) || 0;
+        const filteredEarthquakes = filterByMagnitude(earthquakes, minMagnitude);
+        
+        renderEarthquakeList(filteredEarthquakes);
+        return;
+      }
+    }
+
     setStatusText("데이터 불러오는 중...");
     const earthquakes = await getRecentEarthquakes();
 
@@ -188,11 +284,10 @@ async function loadAndRenderEarthquakes() {
 
     // 가장 최신 이벤트의 시간을 상태 영역에 표시
     const newest = earthquakes[0];
-    const time = newest.time ? new Date(newest.time) : null;
-    const timeStr = time ? time.toLocaleString() : "알 수 없음";
+    const timeStr = newest.time ? formatKoreanTime(newest.time) : "알 수 없음";
     
     const filterText = minMagnitude > 0 ? ` (M${minMagnitude} 이상)` : '';
-    setStatusText(`최근 업데이트 기준: ${timeStr}${filterText}`);
+    setStatusText(`최근 업데이트: ${timeStr}${filterText}`);
 
     renderEarthquakeList(filteredEarthquakes);
   } catch (error) {
@@ -215,6 +310,21 @@ function filterByMagnitude(earthquakes, minMagnitude) {
   return earthquakes.filter(quake => 
     typeof quake.magnitude === 'number' && quake.magnitude >= minMagnitude
   );
+
+
+/**
+ * Estimate intensity (simple heuristic)
+ * @param {number} magnitude
+ * @returns {string}
+ */
+function estimateIntensity(magnitude) {
+  if (typeof magnitude !== 'number') return '?';
+  if (magnitude >= 6.0) return '\uC9C4\uB3C4 6 \uC774\uC0C1';
+  if (magnitude >= 5.0) return '\uC9C4\uB3C4 5-6';
+  if (magnitude >= 4.0) return '\uC9C4\uB3C4 4-5';
+  if (magnitude >= 3.0) return '\uC9C4\uB3C4 3-4';
+  return '\uC9C4\uB3C4 3 \uBBF8\uB9CC';
+}
 }
 
 /**
@@ -225,44 +335,11 @@ async function copyIndividualEarthquake(earthquake) {
   try {
     const location = earthquake.location || earthquake.place || '알 수 없는 위치';
     const magnitude = typeof earthquake.magnitude === 'number' ? earthquake.magnitude.toFixed(1) : '?';
-    
-    // 예상최대진도 추정
-    let intensity = '?';
-    if (typeof earthquake.magnitude === 'number') {
-      if (earthquake.magnitude >= 6.0) intensity = '진도 6 이상';
-      else if (earthquake.magnitude >= 5.0) intensity = '진도 5-6';
-      else if (earthquake.magnitude >= 4.0) intensity = '진도 4-5';
-      else if (earthquake.magnitude >= 3.0) intensity = '진도 3-4';
-      else intensity = '진도 3 미만';
-    }
-    
+    const intensity = estimateIntensity(earthquake.magnitude);
+
     const copyText = `[지진속보] 진원지: ${location} / 추정규모: ${magnitude} / 예상최대진도: ${intensity}`;
     
-    // 클립보드 API가 지원되는지 확인
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(copyText);
-      return true;
-    } else {
-      // 대체 방법: document.execCommand 사용
-      const textArea = document.createElement('textarea');
-      textArea.value = copyText;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      textArea.style.top = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      
-      try {
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        return true;
-      } catch (fallbackError) {
-        document.body.removeChild(textArea);
-        console.error('대체 복사 방법 실패:', fallbackError);
-        return false;
-      }
-    }
+    return await copyToClipboard(copyText);
   } catch (error) {
     console.error('개별 복사 실패:', error);
     return false;
@@ -326,39 +403,22 @@ function setupCopyButton() {
       
       const copyText = formatEarthquakeForCopy(filteredEarthquakes);
       
-      // 클립보드 API가 지원되는지 확인
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(copyText);
-      } else {
-        // 대체 방법: document.execCommand 사용
-        const textArea = document.createElement('textarea');
-        textArea.value = copyText;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
+      const success = await copyToClipboard(copyText);
+      
+      if (success) {
+        // 버튼 상태 변경
+        const originalText = btn.textContent;
+        btn.textContent = '복사 완료!';
+        btn.classList.add('copied');
         
-        try {
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-        } catch (fallbackError) {
-          document.body.removeChild(textArea);
-          throw new Error('클립보드 복사 실패');
-        }
+        // 2초 후 원래 상태로 복귀
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      } else {
+        setStatusText('복사에 실패했습니다.', 'error');
       }
-      
-      // 버튼 상태 변경
-      const originalText = btn.textContent;
-      btn.textContent = '복사 완료!';
-      btn.classList.add('copied');
-      
-      // 2초 후 원래 상태로 복귀
-      setTimeout(() => {
-        btn.textContent = originalText;
-        btn.classList.remove('copied');
-      }, 2000);
       
     } catch (error) {
       console.error('복사 실패:', error);

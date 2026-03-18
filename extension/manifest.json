@@ -16,8 +16,6 @@
     "storage"
   ],
   "host_permissions": [
-    "https://earthquake.usgs.gov/*",
-    "https://www.seismicportal.eu/*"
+    "https://earthquake.usgs.gov/*"
   ]
 }
-
