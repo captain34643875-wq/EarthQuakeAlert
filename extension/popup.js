@@ -333,7 +333,6 @@ function estimateIntensity(magnitude) {
   if (magnitude >= 3.0) return '\uC9C4\uB3C4 3-4';
   return '\uC9C4\uB3C4 3 \uBBF8\uB9CC';
 }
-}
 
 /**
  * 개별 지진 정보 복사
