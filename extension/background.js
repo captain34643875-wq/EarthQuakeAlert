@@ -6,7 +6,7 @@
 importScripts('earthquakeService.js');
 
 const EARTHQUAKE_ALARM_NAME = "EARTHQUAKE_POLLING_ALARM";
-const POLLING_INTERVAL_MINUTES = 0.12; // 7초 (실시간 속보를 위해)
+const POLLING_INTERVAL_MINUTES = 0.033; // 2초 (실시간 속보를 위해)
 
 const STORAGE_KEYS = {
   LAST_EVENT_TIME: "lastEventTime",
